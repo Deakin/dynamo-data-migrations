@@ -6,6 +6,7 @@ import * as credentialProviders from '@aws-sdk/credential-providers';
 import * as migrationsDb from "../../../src/lib/env/migrationsDb";
 import * as config from "../../../src/lib/env/config";
 
+// has to be placed here, otherwise we get 'TypeError: Cannot redefine property: fromInit'
 const mockedAwsCredentialIdenditiyProvider: AwsCredentialIdentityProvider = () => {
     const p = new Promise<AwsCredentialIdentity>((resolve) => {
         resolve({
@@ -41,11 +42,17 @@ describe("migrationsDb", () => {
             await expect(migrationsDb.configureMigrationsLogDbSchema(new AWS.DynamoDB({ apiVersion: '2012-08-10' }))).rejects.toThrowError("Could not create table Migrations_Log");
         })
 
-        it("should reject when error is thrown while waiting for migrationsLogDb table to be active", async () => {
+        it("should reject when error is thrown while waiting for migrationsLogDb table to be active - Table is creating", async () => {
             dynamoMock.on(CreateTableCommand).resolves({})
             dynamoMock.on(DescribeTableCommand).resolves({ Table: { TableStatus: "CREATING" } })
-            await expect(migrationsDb.configureMigrationsLogDbSchema(new AWS.DynamoDB({ apiVersion: '2012-08-10' }), 21)).rejects.toThrowError("Migration table does not exist!");
-        }, 22_000)
+            await expect(migrationsDb.configureMigrationsLogDbSchema(new AWS.DynamoDB({ apiVersion: '2012-08-10' }), 1)).rejects.toThrowError("Migration table does not exist!");
+        })
+
+        it("should reject when error is thrown while waiting for migrationsLogDb table to be active - Table is completely missing", async () => {
+            dynamoMock.on(CreateTableCommand).resolves({})
+            dynamoMock.on(DescribeTableCommand).rejects(new Error("Table does not exist!"))
+            await expect(migrationsDb.configureMigrationsLogDbSchema(new AWS.DynamoDB({ apiVersion: '2012-08-10' }), 1)).rejects.toThrowError("Migration table does not exist!");
+        })
     })
 
     
@@ -145,6 +152,7 @@ describe("migrationsDb", () => {
         })
         
     })
+
 
     describe("AWS config loading from config file", () => {
         it("should throw error if region is not defined in config file", async () => {
