@@ -2,7 +2,8 @@
 /* eslint @typescript-eslint/no-var-requires: "off" */
 import path from "path";
 import fs from "fs-extra";
-import DynamoDB from 'aws-sdk/clients/dynamodb';
+import { DynamoDB } from '@aws-sdk/client-dynamodb'
+import * as AWS from '@aws-sdk/client-dynamodb'
 import { init } from "../../../src/lib/actions/init";
 import { create } from "../../../src/lib/actions/create";
 import { up } from "../../../src/lib/actions/up";
@@ -25,10 +26,11 @@ describe("integration test for all types of supported migrations", () => {
   const dynaliteServer = dynalite();
   const ddb = new DynamoDB({
     endpoint: 'http://localhost:4567',
-    sslEnabled: false,
     region: "local",
-    accessKeyId: "dummy",
-    secretAccessKey: "dummy",
+    credentials: {
+      accessKeyId: "dummy",
+     secretAccessKey: "dummy",
+    }
   });
   beforeAll(() => {
     dynaliteServer.listen(4567, function run(err: any) {
@@ -185,7 +187,7 @@ async function assertEntriesInMigrationLogDb(ddb: DynamoDB, noOfEntries: number,
     TableName: 'MIGRATIONS_LOG_DB',
   };
   const migrationLogResults: string[] = [];
-  const items = await ddb.scan(params).promise();
+  const items = await ddb.scan(params);
   if (items.Items) {
     migrationLogResults.push(...items.Items.map((item) => { return item.FILE_NAME.S || ""; }));
   }

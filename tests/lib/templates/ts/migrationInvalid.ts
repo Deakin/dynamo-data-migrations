@@ -1,4 +1,4 @@
-import AWS from 'aws-sdk';
+import * as AWS from '@aws-sdk/client-dynamodb'
 
 export async function up(ddb: AWS.DynamoDB) {
   // adding an entry in table at does not exist
@@ -12,7 +12,7 @@ export async function up(ddb: AWS.DynamoDB) {
 
   // Call DynamoDB to add the item to the table
   return new Promise((resolve, reject) => {
-    ddb.putItem(params, function callback(err, data) {
+    ddb.putItem(params, function callback(err: any, data: AWS.PutItemCommandOutput | undefined) {
       if (err) {
         reject(err);
       } else {
@@ -32,7 +32,7 @@ export async function down(ddb: AWS.DynamoDB) {
     }
   };
   return new Promise((resolve, reject) => {
-    ddb.putItem(params, function callback(err, data) {
+    ddb.putItem(params, function callback(err: any, data: AWS.PutItemCommandOutput | undefined) {
       if (err) {
         reject(err);
       } else {
