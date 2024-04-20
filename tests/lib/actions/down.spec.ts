@@ -36,7 +36,7 @@ describe("down", () => {
         jest.spyOn(migrationsDb, "getDdb").mockResolvedValue( new AWS.DynamoDB({ apiVersion: '2012-08-10' }));
         
 
-        migrationsDbDeleteMigrationFromMigrationsLogDb = jest.spyOn(migrationsDb, "deleteMigrationFromMigrationsLogDb").mockReturnValue(Promise.resolve());
+        migrationsDbDeleteMigrationFromMigrationsLogDb = jest.spyOn(migrationsDb, "deleteMigrationFromMigrationsLogDb").mockReturnValue(Promise.resolve({ $metadata: {} }));
     });
 
 

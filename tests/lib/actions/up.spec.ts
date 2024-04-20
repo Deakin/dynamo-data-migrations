@@ -55,7 +55,7 @@ describe("up", () => {
 
     jest.spyOn(migrationsDb, "getDdb").mockResolvedValue(awsConfig);
 
-    migrationsDbAddMigrationToMigrationsLogDb = jest.spyOn(migrationsDb, "addMigrationToMigrationsLogDb").mockReturnValue(Promise.resolve());
+    migrationsDbAddMigrationToMigrationsLogDb = jest.spyOn(migrationsDb, "addMigrationToMigrationsLogDb").mockReturnValue(Promise.resolve({ $metadata: {} }));
     migrationsDbConfigureMigrationsLogDbSchema = jest.spyOn(migrationsDb, "configureMigrationsLogDbSchema").mockReturnValue(Promise.resolve());
   });
 

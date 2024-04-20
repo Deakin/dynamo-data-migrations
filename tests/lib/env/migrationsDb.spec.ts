@@ -1,13 +1,26 @@
-// todo jeggers
 import * as AWS from '@aws-sdk/client-dynamodb'
-import { CreateTableCommand, DescribeTableCommand, DescribeTableCommandInput, DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { mockClient } from 'aws-sdk-client-mock';
-import {  } from 'aws-sdk-client-mock/dist/types/awsClientStub';
-// import { CreateTableInput, PutItemInput, DescribeTableInput, ScanInput, ItemList, DeleteItemInput } from '@aws-sdk/client-dynamodb';
-import sinon from 'sinon';
-
+import { CreateTableCommand, DeleteItemCommand, DescribeTableCommand, DynamoDBClient, PutItemCommand, ScanCommand } from '@aws-sdk/client-dynamodb'
+import { AwsCredentialIdentity, AwsCredentialIdentityProvider } from '@aws-sdk/types';
+import * as credentialProviders from '@aws-sdk/credential-providers';
 import * as migrationsDb from "../../../src/lib/env/migrationsDb";
 import * as config from "../../../src/lib/env/config";
+
+const mockedAwsCredentialIdenditiyProvider: AwsCredentialIdentityProvider = () => {
+    const p = new Promise<AwsCredentialIdentity>((resolve) => {
+        resolve({
+        accessKeyId: 'testAccess',
+        secretAccessKey: 'testSecret',
+        sessionToken: 'mockSessionToken',
+        credentialScope: 'mockCredentialScope' });
+      });
+    return p
+}
+
+jest.mock("@aws-sdk/credential-providers", () => ({
+    ...jest.requireActual("@aws-sdk/credential-providers"),
+    fromIni: jest.fn()
+  }));
 
 
 describe("migrationsDb", () => {
@@ -35,28 +48,22 @@ describe("migrationsDb", () => {
         }, 22_000)
     })
 
-    /*
+    
     describe("addMigrationToMigrationsLogDb()", () => {
         it("should resolve when no errors are thrown while adding migration to migrationsLogDb", async () => {
-            AWSMock.mock('DynamoDB', 'putItem', (_params: PutItemInput, callback: (error: Error | null, responseObj: { pk: string, sk: string }) => void) => {
-                callback(null, { pk: 'foo', sk: 'bar' });
-            })
+            dynamoMock.on(PutItemCommand).resolves({})
             await expect(migrationsDb.addMigrationToMigrationsLogDb({ fileName: "abc.ts", appliedAt: "20201014172343" }, new AWS.DynamoDB({ apiVersion: '2012-08-10' }))).resolves.not.toThrow();
         })
 
         it("should reject when error is thrown while adding migration to migrationsLogDb", async () => {
-            AWSMock.mock('DynamoDB', 'putItem', (_params: PutItemInput, callback: (error: Error | null, responseObj: { pk: string, sk: string } | null) => void) => {
-                callback(new Error("Resource Not Found"), null);
-            })
+            dynamoMock.on(PutItemCommand).rejects(new Error("Resource Not Found"))
             await expect(migrationsDb.addMigrationToMigrationsLogDb({ fileName: "abc.ts", appliedAt: "20201014172343" }, new AWS.DynamoDB({ apiVersion: '2012-08-10' }))).rejects.toThrow("Resource Not Found");
         })
     })
 
     describe("deleteMigrationFromMigrationsLogDb()", () => {
         it("should resolve when no errors are thrown while deleting migration", async () => {
-            AWSMock.mock('DynamoDB', 'deleteItem', (_params: DeleteItemInput, callback: (error: Error | null, responseObj: { pk: string, sk: string }) => void) => {
-                callback(null, { pk: 'foo', sk: 'bar' });
-            })
+            dynamoMock.on(DeleteItemCommand).resolves({})
 
             const item: { fileName: string; appliedAt: string } = {
                 fileName: "123.ts",
@@ -67,9 +74,7 @@ describe("migrationsDb", () => {
         })
 
         it("should reject when error is thrown while deleting migration", async () => {
-            AWSMock.mock('DynamoDB', 'deleteItem', (_params: DeleteItemInput, callback: (error: Error | null, responseObj: { pk: string, sk: string } | null) => void) => {
-                callback(new Error("Could not delete migration"), null);
-            });
+            dynamoMock.on(DeleteItemCommand).rejects(new Error("Could not delete migration"));
 
             const item: { fileName: string; appliedAt: string } = {
                 fileName: "123.ts",
@@ -82,25 +87,20 @@ describe("migrationsDb", () => {
 
     describe("doesMigrationsLogDbExists()", () => {
         it("should resolve when no errors are thrown while describing migrationsLogDb", async () => {
-            AWSMock.mock('DynamoDB', 'describeTable', (_params: DescribeTableInput, callback: (error: Error | null) => void) => {
-                callback(null);
-            });
+            dynamoMock.on(DescribeTableCommand).resolves({})
             await expect(migrationsDb.doesMigrationsLogDbExists(new AWS.DynamoDB({ apiVersion: '2012-08-10' }))).resolves.toBeTruthy();
 
         })
 
         it("should reject when error is thrown while describing migrationsLogDb", async () => {
-            AWSMock.mock('DynamoDB', 'describeTable', (_params: DescribeTableInput, callback: (error: Error | null) => void) => {
-                callback(new Error("Resource Not Found"));
-            })
+            dynamoMock.on(DescribeTableCommand).rejects(new Error("Resource Not Found"));
             await expect(migrationsDb.doesMigrationsLogDbExists(new AWS.DynamoDB({ apiVersion: '2012-08-10' }))).resolves.toBeFalsy();
-
         })
     })
 
     describe("getAllMigrations()", () => {
         it("should return a migrations array", async () => {
-            const Items: ItemList = [{
+            const Items = [{
                 FILE_NAME: { S: "abc.ts" },
                 APPLIED_AT: { S: "123" }
             },
@@ -109,9 +109,7 @@ describe("migrationsDb", () => {
                 APPLIED_AT: { S: "124" }
             }];
 
-            AWSMock.mock('DynamoDB', 'scan', (_params: ScanInput, callback: (error: Error | null, responseObj: { Items: ItemList; }) => void) => {
-                callback(null, { Items });
-            });
+            dynamoMock.on(ScanCommand).resolves({ Items })
 
             const migrations = await migrationsDb.getAllMigrations(new AWS.DynamoDB({ apiVersion: '2012-08-10' }));
             expect(migrations).toStrictEqual([{ FILE_NAME: "abc.ts", APPLIED_AT: "123" }, { FILE_NAME: "def.ts", APPLIED_AT: "124" }]);
@@ -119,8 +117,7 @@ describe("migrationsDb", () => {
         });
 
         it("should make recursive calls and return the data of all recursive calls in single array", async () => {
-            const stub = sinon.stub();
-            let Items: ItemList = [{
+            const Items1 = [{
                 FILE_NAME: { S: "1.ts" },
                 APPLIED_AT: { S: "1" }
             },
@@ -129,28 +126,24 @@ describe("migrationsDb", () => {
                 APPLIED_AT: { S: "2" }
             }];
 
-            const LastEvaluatedKey: AWS.DynamoDB.Key = {
+            const LastEvaluatedKey = {
                 FILE_NAME: { S: "2.ts" },
                 APPLIED_AT: { S: "2" }
             };
-
-
-            stub.onCall(0).returns({ Items, LastEvaluatedKey });
-            Items = [
+   
+            const Items2 = [
                 {
                     FILE_NAME: { S: "3.ts" },
                     APPLIED_AT: { S: "3" }
                 }
             ]
-            stub.onCall(1).returns({ Items });
 
-            AWSMock.mock('DynamoDB', 'scan', (_params: ScanInput, callback: (error: Error | null, stub: sinon.SinonStub) => void) => {
-                callback(null, stub());
-            });
+            dynamoMock.on(ScanCommand).resolvesOnce({ Items: Items1, LastEvaluatedKey }).resolvesOnce({ Items: Items2 })
             const migrations = await migrationsDb.getAllMigrations(new AWS.DynamoDB({ apiVersion: '2012-08-10' }));
             expect(migrations).toStrictEqual([{ FILE_NAME: "1.ts", APPLIED_AT: "1" }, { FILE_NAME: "2.ts", APPLIED_AT: "2" }, { FILE_NAME: "3.ts", APPLIED_AT: "3" }]);
 
         })
+        
     })
 
     describe("AWS config loading from config file", () => {
@@ -169,25 +162,22 @@ describe("migrationsDb", () => {
 
             }]);
             const dynamodb = await migrationsDb.getDdb();
-            expect(dynamodb.config.region).toStrictEqual('testRegion');
-            expect(dynamodb.config.credentials?.accessKeyId).toStrictEqual('testAccess');
-            expect(dynamodb.config.credentials?.secretAccessKey).toStrictEqual('testSecret');
+            expect(await(dynamodb.config.region())).toStrictEqual('testRegion');
+            expect((await dynamodb.config.credentials()).accessKeyId).toStrictEqual('testAccess');
+            expect((await dynamodb.config.credentials()).secretAccessKey).toStrictEqual('testSecret');
         });
 
         it("should configure AWS credentials from shared credentials file when credentials are not provided in config file", async () => {
-            jest.spyOn(AWS, "SharedIniFileCredentials").mockImplementation(() => {
-                return new AWS.Credentials({
-                    "accessKeyId": "testAccess",
-                    "secretAccessKey": "testSecret"
-                })
-            });
+              const spyOnA = jest.spyOn(credentialProviders, 'fromIni');
+              spyOnA.mockReturnValue(mockedAwsCredentialIdenditiyProvider);
+            
             jest.spyOn(config, "loadAWSConfig").mockResolvedValue([{
                 region: 'testRegion'
             }]);
             const dynamodb = await migrationsDb.getDdb();
-            expect(dynamodb.config.region).toStrictEqual('testRegion');
-            expect(dynamodb.config.credentials?.accessKeyId).toStrictEqual('testAccess');
-            expect(dynamodb.config.credentials?.secretAccessKey).toStrictEqual('testSecret');
+            expect(await dynamodb.config.region()).toStrictEqual('testRegion');
+            expect((await dynamodb.config.credentials()).accessKeyId).toStrictEqual('testAccess');
+            expect((await dynamodb.config.credentials()).secretAccessKey).toStrictEqual('testSecret');
         });
 
         it("should configure AWS with credentials from config file based on input profile", async () => {
@@ -210,20 +200,19 @@ describe("migrationsDb", () => {
             }]);
 
             const dynamodbTest = await migrationsDb.getDdb('test');
-            expect(dynamodbTest.config.region).toStrictEqual('testRegion');
-            expect(dynamodbTest.config.credentials?.accessKeyId).toStrictEqual('testAccess');
-            expect(dynamodbTest.config.credentials?.secretAccessKey).toStrictEqual('testSecret');
+            expect(await dynamodbTest.config.region()).toStrictEqual('testRegion');
+            expect((await dynamodbTest.config.credentials()).accessKeyId).toStrictEqual('testAccess');
+            expect((await dynamodbTest.config.credentials()).secretAccessKey).toStrictEqual('testSecret');
 
             const dynamodbDev = await migrationsDb.getDdb('dev');
-            expect(dynamodbDev.config.region).toStrictEqual('devRegion');
-            expect(dynamodbDev.config.credentials?.accessKeyId).toStrictEqual('devAccess');
-            expect(dynamodbDev.config.credentials?.secretAccessKey).toStrictEqual('devSecret');
+            expect(await dynamodbDev.config.region()).toStrictEqual('devRegion');
+            expect((await dynamodbDev.config.credentials()).accessKeyId).toStrictEqual('devAccess');
+            expect((await dynamodbDev.config.credentials()).secretAccessKey).toStrictEqual('devSecret');
 
             const dynamodbDevDefault = await migrationsDb.getDdb('default');
-            expect(dynamodbDevDefault.config.region).toStrictEqual('defaultRegion');
-            expect(dynamodbDevDefault.config.credentials?.accessKeyId).toStrictEqual('defaultAccess');
-            expect(dynamodbDevDefault.config.credentials?.secretAccessKey).toStrictEqual('defaultSecret');
+            expect(await dynamodbDevDefault.config.region()).toStrictEqual('defaultRegion');
+            expect((await dynamodbDevDefault.config.credentials()).accessKeyId).toStrictEqual('defaultAccess');
+            expect((await dynamodbDevDefault.config.credentials()).secretAccessKey).toStrictEqual('defaultSecret');
         });
     })
-    */
 })

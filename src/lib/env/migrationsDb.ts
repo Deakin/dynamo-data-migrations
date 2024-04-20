@@ -1,6 +1,6 @@
 import * as AWS from '@aws-sdk/client-dynamodb';
 import { AttributeValue, CreateTableCommandInput, waitUntilTableExists } from '@aws-sdk/client-dynamodb';
-import { fromIni } from '@aws-sdk/credential-providers'; // ES6 import
+import { fromIni } from '@aws-sdk/credential-providers';
 import * as config from './config';
 
 export async function getDdb(profile = 'default') {
@@ -75,16 +75,12 @@ export async function addMigrationToMigrationsLogDb(item: { fileName: string; ap
     };
 
     // Call DynamoDB to add the item to the table
-
-    return new Promise((resolve, reject) => {
-        ddb.putItem(params, async function callback(err: any, data: AWS.PutItemCommandOutput | undefined) {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(data);
-            }
-        });
-    });
+    try {
+        const data = await ddb.putItem(params);
+        return await Promise.resolve(data);
+    } catch (error) {
+        return Promise.reject(error);
+    }
 }
 
 export async function deleteMigrationFromMigrationsLogDb(
@@ -99,30 +95,24 @@ export async function deleteMigrationFromMigrationsLogDb(
         },
     };
 
-    return new Promise((resolve, reject) => {
-        ddb.deleteItem(params, function callback(err: any, data: AWS.DeleteItemCommandOutput | undefined) {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(data);
-            }
-        });
-    });
+    try {
+        const data = await ddb.deleteItem(params);
+        return await Promise.resolve(data);
+    } catch (error) {
+        return Promise.reject(error);
+    }
 }
 
 export async function doesMigrationsLogDbExists(ddb: AWS.DynamoDB) {
     const params = {
         TableName: 'MIGRATIONS_LOG_DB',
     };
-    return new Promise((resolve) => {
-        ddb.describeTable(params, function callback(err) {
-            if (err) {
-                resolve(false);
-            } else {
-                resolve(true);
-            }
-        });
-    });
+    try {
+        const data = await ddb.describeTable(params);
+        return await Promise.resolve(true);
+    } catch {
+        return Promise.resolve(false);
+    }
 }
 
 export async function getAllMigrations(ddb: AWS.DynamoDB) {
