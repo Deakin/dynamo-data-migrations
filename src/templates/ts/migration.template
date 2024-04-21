@@ -1,4 +1,4 @@
-import AWS from 'aws-sdk';
+import * as AWS from '@aws-sdk/client-dynamodb';
 
 export async function up(ddb: AWS.DynamoDB) {
     // TODO write your migration here.

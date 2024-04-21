@@ -2,8 +2,8 @@
 /* eslint @typescript-eslint/no-var-requires: "off" */
 import path from "path";
 import fs from "fs-extra";
-import { DynamoDB } from '@aws-sdk/client-dynamodb'
-import * as AWS from '@aws-sdk/client-dynamodb'
+import { DynamoDB } from '@aws-sdk/client-dynamodb';
+import * as AWS from '@aws-sdk/client-dynamodb';
 import { init } from "../../../src/lib/actions/init";
 import { create } from "../../../src/lib/actions/create";
 import { up } from "../../../src/lib/actions/up";
