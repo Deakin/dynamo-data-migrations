@@ -179,7 +179,7 @@ async function loadAwsConfig(inputProfile: string): Promise<AWSConfig> {
         const credentials = await fromIni({ profile: inputProfile })();
         resultConfig.accessKeyId = credentials.accessKeyId;
         resultConfig.secretAccessKey = credentials.secretAccessKey;
-        resultConfig.sessionToken = credentials.sessionToken;
+        resultConfig.sessionToken = credentials.sessionToken as string;
     }
     return resultConfig;
 }
