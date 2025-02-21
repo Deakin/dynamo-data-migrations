@@ -8,7 +8,11 @@ export async function getDdb(profile = 'default') {
     return new AWS.DynamoDB({
         apiVersion: '2012-08-10',
         region: awsConfig.region,
-        credentials: { accessKeyId: awsConfig.accessKeyId, secretAccessKey: awsConfig.secretAccessKey },
+        credentials: { 
+            accessKeyId: awsConfig.accessKeyId, 
+            secretAccessKey: awsConfig.secretAccessKey,
+            sessionToken: awsConfig.sessionToken
+        },
     });
 }
 
@@ -175,6 +179,7 @@ async function loadAwsConfig(inputProfile: string): Promise<AWSConfig> {
         const credentials = await fromIni({ profile: inputProfile })();
         resultConfig.accessKeyId = credentials.accessKeyId;
         resultConfig.secretAccessKey = credentials.secretAccessKey;
+        resultConfig.sessionToken = credentials.sessionToken;
     }
     return resultConfig;
 }
