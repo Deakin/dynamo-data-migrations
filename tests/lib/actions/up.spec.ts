@@ -1,4 +1,4 @@
-import * as AWS from '@aws-sdk/client-dynamodb'
+import * as AWS from '@aws-sdk/client-dynamodb';
 import sinon from 'sinon';
 import { up } from "../../../src/lib/actions/up"
 

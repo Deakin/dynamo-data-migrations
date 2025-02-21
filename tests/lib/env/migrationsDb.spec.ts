@@ -1,6 +1,6 @@
-import * as AWS from '@aws-sdk/client-dynamodb'
+import * as AWS from '@aws-sdk/client-dynamodb';
 import { mockClient } from 'aws-sdk-client-mock';
-import { CreateTableCommand, DeleteItemCommand, DescribeTableCommand, DynamoDBClient, PutItemCommand, ScanCommand } from '@aws-sdk/client-dynamodb'
+import { CreateTableCommand, DeleteItemCommand, DescribeTableCommand, DynamoDBClient, PutItemCommand, ScanCommand } from '@aws-sdk/client-dynamodb';
 import { AwsCredentialIdentity, AwsCredentialIdentityProvider } from '@aws-sdk/types';
 import * as credentialProviders from '@aws-sdk/credential-providers';
 import * as migrationsDb from "../../../src/lib/env/migrationsDb";

@@ -16,6 +16,7 @@ export type AWSConfig = {
     region: string;
     accessKeyId: string;
     secretAccessKey: string;
+    sessionToken: string;
 };
 
 export async function configureMigrationsLogDbSchema(ddb: AWS.DynamoDB, maxWaitTimeForTableCreation = 120) {
@@ -126,7 +127,7 @@ export async function getAllMigrations(ddb: AWS.DynamoDB) {
         const { Items, LastEvaluatedKey } = await ddb.scan(params);
         if (Items)
             migrations.push(
-                ...Items.map((item) => {
+                ...Items.map((item: any) => {
                     return {
                         FILE_NAME: item.FILE_NAME.S,
                         APPLIED_AT: item.APPLIED_AT.S,
@@ -145,6 +146,7 @@ async function loadAwsConfig(inputProfile: string): Promise<AWSConfig> {
     const resultConfig: AWSConfig = {
         accessKeyId: '',
         secretAccessKey: '',
+        sessionToken: '',
         region: '',
     };
 
@@ -164,9 +166,10 @@ async function loadAwsConfig(inputProfile: string): Promise<AWSConfig> {
         throw new Error(`Please provide region for profile:${inputProfile}`);
     }
 
-    if (profileConfig && profileConfig.accessKeyId && profileConfig.secretAccessKey) {
+    if (profileConfig && profileConfig.accessKeyId && profileConfig.secretAccessKey && profileConfig.sessionToken) {
         resultConfig.accessKeyId = profileConfig.accessKeyId;
         resultConfig.secretAccessKey = profileConfig.secretAccessKey;
+        resultConfig.sessionToken = profileConfig.sessionToken;
     } else {
         // Load config from shared credentials ini file if present
         const credentials = await fromIni({ profile: inputProfile })();

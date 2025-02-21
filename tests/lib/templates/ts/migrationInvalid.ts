@@ -1,4 +1,4 @@
-import * as AWS from '@aws-sdk/client-dynamodb'
+import * as AWS from '@aws-sdk/client-dynamodb';
 
 export async function up(ddb: AWS.DynamoDB) {
   // adding an entry in table at does not exist

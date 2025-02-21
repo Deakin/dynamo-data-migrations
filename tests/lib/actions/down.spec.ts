@@ -1,4 +1,4 @@
-import * as AWS from '@aws-sdk/client-dynamodb'
+import * as AWS from '@aws-sdk/client-dynamodb';
 import { down } from "../../../src/lib/actions/down";
 
 import * as statusModule from '../../../src/lib/actions/status';
