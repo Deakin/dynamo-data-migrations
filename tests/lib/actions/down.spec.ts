@@ -1,4 +1,4 @@
-import AWS from 'aws-sdk';
+import * as AWS from '@aws-sdk/client-dynamodb';
 import { down } from "../../../src/lib/actions/down";
 
 import * as statusModule from '../../../src/lib/actions/status';
@@ -36,7 +36,7 @@ describe("down", () => {
         jest.spyOn(migrationsDb, "getDdb").mockResolvedValue( new AWS.DynamoDB({ apiVersion: '2012-08-10' }));
         
 
-        migrationsDbDeleteMigrationFromMigrationsLogDb = jest.spyOn(migrationsDb, "deleteMigrationFromMigrationsLogDb").mockReturnValue(Promise.resolve());
+        migrationsDbDeleteMigrationFromMigrationsLogDb = jest.spyOn(migrationsDb, "deleteMigrationFromMigrationsLogDb").mockReturnValue(Promise.resolve({ $metadata: {} }));
     });
 
 

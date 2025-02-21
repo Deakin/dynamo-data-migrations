@@ -1,3 +1,4 @@
+import * as AWS from '@aws-sdk/client-dynamodb';
 import pEachSeries from 'p-each-series';
 import { status } from './status';
 import * as migrationsDir from '../env/migrationsDir';

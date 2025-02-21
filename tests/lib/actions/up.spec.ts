@@ -1,4 +1,4 @@
-import AWS from 'aws-sdk';
+import * as AWS from '@aws-sdk/client-dynamodb';
 import sinon from 'sinon';
 import { up } from "../../../src/lib/actions/up"
 
@@ -14,7 +14,7 @@ describe("up", () => {
   let migrationsDbAddMigrationToMigrationsLogDb: jest.SpyInstance;
   let migrationsDbCheckMigrationLog: jest.SpyInstance;
   let migrationsDbConfigureMigrationsLogDbSchema: jest.SpyInstance;
-  const awsConfig = new AWS.DynamoDB({ apiVersion: '2012-08-10' });
+  const awsConfig = new AWS.DynamoDB ({ apiVersion: '2012-08-10' });
 
   beforeEach(() => {
     migrationsDbCheckMigrationLog = jest.spyOn(migrationsDb, "doesMigrationsLogDbExists").mockResolvedValue(true);
@@ -55,7 +55,7 @@ describe("up", () => {
 
     jest.spyOn(migrationsDb, "getDdb").mockResolvedValue(awsConfig);
 
-    migrationsDbAddMigrationToMigrationsLogDb = jest.spyOn(migrationsDb, "addMigrationToMigrationsLogDb").mockReturnValue(Promise.resolve());
+    migrationsDbAddMigrationToMigrationsLogDb = jest.spyOn(migrationsDb, "addMigrationToMigrationsLogDb").mockReturnValue(Promise.resolve({ $metadata: {} }));
     migrationsDbConfigureMigrationsLogDbSchema = jest.spyOn(migrationsDb, "configureMigrationsLogDbSchema").mockReturnValue(Promise.resolve());
   });
 
