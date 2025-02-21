@@ -158,7 +158,7 @@ async function loadAwsConfig(inputProfile: string): Promise<AWSConfig> {
 
     // Check for data for input profile
     const profileConfig = configFromFile.find(
-        (obj: { profile: string; region: string; accessKeyId: string; secretAccessKey: string }) => {
+        (obj: { profile: string; region: string; accessKeyId: string; secretAccessKey: string; sessionToken: string; }) => {
             return obj.profile === inputProfile || (!obj.profile && inputProfile === 'default');
         },
     );
