@@ -1,14 +1,30 @@
-import AWS from 'aws-sdk';
-import { Key } from 'aws-sdk/clients/dynamodb';
+import * as AWS from '@aws-sdk/client-dynamodb';
+import { AttributeValue, CreateTableCommandInput, waitUntilTableExists } from '@aws-sdk/client-dynamodb';
+import { fromIni } from '@aws-sdk/credential-providers';
 import * as config from './config';
 
 export async function getDdb(profile = 'default') {
-    await loadAwsConfig(profile);
-    return new AWS.DynamoDB({ apiVersion: '2012-08-10' });
+    const awsConfig = await loadAwsConfig(profile);
+    return new AWS.DynamoDB({
+        apiVersion: '2012-08-10',
+        region: awsConfig.region,
+        credentials: { 
+            accessKeyId: awsConfig.accessKeyId, 
+            secretAccessKey: awsConfig.secretAccessKey,
+            sessionToken: awsConfig.sessionToken
+        },
+    });
 }
 
-export async function configureMigrationsLogDbSchema(ddb: AWS.DynamoDB) {
-    const params = {
+export type AWSConfig = {
+    region: string;
+    accessKeyId: string;
+    secretAccessKey: string;
+    sessionToken: string;
+};
+
+export async function configureMigrationsLogDbSchema(ddb: AWS.DynamoDB, maxWaitTimeForTableCreation = 120) {
+    const params: CreateTableCommandInput = {
         AttributeDefinitions: [
             {
                 AttributeName: 'FILE_NAME',
@@ -38,24 +54,20 @@ export async function configureMigrationsLogDbSchema(ddb: AWS.DynamoDB) {
             StreamEnabled: false,
         },
     };
-    ddb.createTable(params, function callback(err) {
-        if (err) {
-            throw err;
-        }
-    });
+    await ddb.createTable(params);
 
-    const migrationParam = {
-        TableName: 'MIGRATIONS_LOG_DB',
-    };
-    return new Promise((resolve, reject) => {
-        ddb.waitFor('tableExists', migrationParam, async function callback(err, data) {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(data);
-            }
-        });
-    });
+    try {
+        const tableExists = await waitUntilTableExists(
+            { client: ddb, maxWaitTime: maxWaitTimeForTableCreation },
+            { TableName: 'MIGRATIONS_LOG_DB' },
+        );
+        if (tableExists.state === 'SUCCESS') {
+            return await Promise.resolve();
+        }
+        return await Promise.reject(new Error('Migration table does not exist!'));
+    } catch {
+        return Promise.reject(new Error('Migration table does not exist!'));
+    }
 }
 
 export async function addMigrationToMigrationsLogDb(item: { fileName: string; appliedAt: string }, ddb: AWS.DynamoDB) {
@@ -68,16 +80,12 @@ export async function addMigrationToMigrationsLogDb(item: { fileName: string; ap
     };
 
     // Call DynamoDB to add the item to the table
-
-    return new Promise((resolve, reject) => {
-        ddb.putItem(params, async function callback(err, data) {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(data);
-            }
-        });
-    });
+    try {
+        const data = await ddb.putItem(params);
+        return await Promise.resolve(data);
+    } catch (error) {
+        return Promise.reject(error);
+    }
 }
 
 export async function deleteMigrationFromMigrationsLogDb(
@@ -92,44 +100,38 @@ export async function deleteMigrationFromMigrationsLogDb(
         },
     };
 
-    return new Promise((resolve, reject) => {
-        ddb.deleteItem(params, function callback(err, data) {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(data);
-            }
-        });
-    });
+    try {
+        const data = await ddb.deleteItem(params);
+        return await Promise.resolve(data);
+    } catch (error) {
+        return Promise.reject(error);
+    }
 }
 
 export async function doesMigrationsLogDbExists(ddb: AWS.DynamoDB) {
     const params = {
         TableName: 'MIGRATIONS_LOG_DB',
     };
-    return new Promise((resolve) => {
-        ddb.describeTable(params, function callback(err) {
-            if (err) {
-                resolve(false);
-            } else {
-                resolve(true);
-            }
-        });
-    });
+    try {
+        const data = await ddb.describeTable(params);
+        return await Promise.resolve(true);
+    } catch {
+        return Promise.resolve(false);
+    }
 }
 
 export async function getAllMigrations(ddb: AWS.DynamoDB) {
     const migrations: { FILE_NAME?: string; APPLIED_AT?: string }[] = [];
-    const recursiveProcess = async (lastEvaluatedKey?: Key) => {
+    const recursiveProcess = async (lastEvaluatedKey?: Record<string, AttributeValue>) => {
         const params = {
             TableName: 'MIGRATIONS_LOG_DB',
             ExclusiveStartKey: lastEvaluatedKey,
         };
 
-        const { Items, LastEvaluatedKey } = await ddb.scan(params).promise();
+        const { Items, LastEvaluatedKey } = await ddb.scan(params);
         if (Items)
             migrations.push(
-                ...Items.map((item) => {
+                ...Items.map((item: any) => {
                     return {
                         FILE_NAME: item.FILE_NAME.S,
                         APPLIED_AT: item.APPLIED_AT.S,
@@ -144,30 +146,40 @@ export async function getAllMigrations(ddb: AWS.DynamoDB) {
     return migrations;
 }
 
-async function loadAwsConfig(inputProfile: string) {
+async function loadAwsConfig(inputProfile: string): Promise<AWSConfig> {
+    const resultConfig: AWSConfig = {
+        accessKeyId: '',
+        secretAccessKey: '',
+        sessionToken: '',
+        region: '',
+    };
+
     const configFromFile = await config.loadAWSConfig();
 
     // Check for data for input profile
     const profileConfig = configFromFile.find(
-        (obj: { profile: string; region: string; accessKeyId: string; secretAccessKey: string }) => {
+        (obj: { profile: string; region: string; accessKeyId: string; secretAccessKey: string; sessionToken: string; }) => {
             return obj.profile === inputProfile || (!obj.profile && inputProfile === 'default');
         },
     );
 
     // Populate  region
     if (profileConfig && profileConfig.region) {
-        AWS.config.region = profileConfig.region;
+        resultConfig.region = profileConfig.region;
     } else {
         throw new Error(`Please provide region for profile:${inputProfile}`);
     }
 
-    if (profileConfig && profileConfig.accessKeyId && profileConfig.secretAccessKey) {
-        AWS.config.update({
-            accessKeyId: profileConfig.accessKeyId,
-            secretAccessKey: profileConfig.secretAccessKey,
-        });
+    if (profileConfig && profileConfig.accessKeyId && profileConfig.secretAccessKey && profileConfig.sessionToken) {
+        resultConfig.accessKeyId = profileConfig.accessKeyId;
+        resultConfig.secretAccessKey = profileConfig.secretAccessKey;
+        resultConfig.sessionToken = profileConfig.sessionToken;
     } else {
-        // Load config from shared credentials file if present
-        AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile: inputProfile });
+        // Load config from shared credentials ini file if present
+        const credentials = await fromIni({ profile: inputProfile })();
+        resultConfig.accessKeyId = credentials.accessKeyId;
+        resultConfig.secretAccessKey = credentials.secretAccessKey;
+        resultConfig.sessionToken = credentials.sessionToken as string;
     }
+    return resultConfig;
 }

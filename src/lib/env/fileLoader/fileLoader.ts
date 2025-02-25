@@ -1,3 +1,5 @@
+import * as AWS from '@aws-sdk/client-dynamodb';
+
 export interface Migration {
     up(ddb: AWS.DynamoDB): Promise<void>;
     down(ddb: AWS.DynamoDB): Promise<void>;

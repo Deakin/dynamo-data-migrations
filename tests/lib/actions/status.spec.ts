@@ -1,4 +1,4 @@
-import AWS from "aws-sdk";
+import * as AWS from '@aws-sdk/client-dynamodb';
 import { status } from "../../../src/lib/actions/status";
 
 import * as migrationsDir from '../../../src/lib/env/migrationsDir';
