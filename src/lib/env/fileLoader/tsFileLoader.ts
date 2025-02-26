@@ -6,13 +6,11 @@ import { register } from 'ts-node';
 export class TsFileLoader extends FileLoader {
     constructor() {
         super(paths.tsExtension, paths.tsMigrationPath);
-        // Ensure ts-node is registered
         register({
-          project: paths.tsConfigPath,
-          transpileOnly: true,
-          require: ['tsconfig-paths/register']
+            transpileOnly: true,
+            project: paths.tsConfigPath,
+            require: ['tsconfig-paths/register']
         });
-        
     }
 
     async loadMigrationFile(importPath: string): Promise<Migration> {

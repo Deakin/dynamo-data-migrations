@@ -21,10 +21,13 @@ export function getFileLoader() {
     const configDetails = loadConfig();
     switch (configDetails.migrationType) {
         case tsMigrationType:
+            console.log('Using TsFileLoader')
             return new TsFileLoader();
         case cjsMigrationType:
+            console.log('Using TsFileLoader')
             return new CjsFileLoader();
         case mjsMigrationType:
+            console.log('Using TsFileLoader')
             return new MjsFileLoader();
         default:
             throw new Error('Unsupported migration type in config.json. Ensure migration type is ts,cjs or mjs');
