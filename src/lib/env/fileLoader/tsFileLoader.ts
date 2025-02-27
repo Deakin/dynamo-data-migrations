@@ -7,16 +7,16 @@ export class TsFileLoader extends FileLoader {
     constructor() {
         super(paths.tsExtension, paths.tsMigrationPath);
 
-        console.log('Registering ts-node...'); // Debugging log
+        console.log('Registering ts-node...');
         register({
             transpileOnly: true,
-            project: paths.tsConfigPath, // Ensure this is set
+            project: paths.tsConfigPath,
             require: ['tsconfig-paths/register'],
         });
     }
 
     async loadMigrationFile(importPath: string): Promise<Migration> {
-        console.log('Importing migration file:', importPath); // Debugging log
+        console.log('Importing migration file:', importPath);
         return import(pathToFileURL(importPath).href);
     }
 }
