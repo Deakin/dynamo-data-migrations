@@ -1,7 +1,7 @@
-import { FileLoader, Migration } from './fileLoader';
-import * as paths from '../paths';
 import { pathToFileURL } from 'url';
 import { register } from 'ts-node';
+import { FileLoader, Migration } from './fileLoader';
+import * as paths from '../paths';
 
 export class TsFileLoader extends FileLoader {
     constructor() {

@@ -11,16 +11,21 @@ class ERROR extends Error {
 
 export async function up(profile = 'default') {
     const ddb = await migrationsDb.getDdb(profile);
+    console.log(ddb)
     if (!(await migrationsDb.doesMigrationsLogDbExists(ddb))) {
         await migrationsDb.configureMigrationsLogDbSchema(ddb);
     }
     const statusItems = await status(profile);
+    console.log(statusItems)
     const pendingItems = _.filter(statusItems, { appliedAt: 'PENDING' });
+    console.log(pendingItems)
     const migrated: string[] = [];
     const migrateItem = async (item: { fileName: string; appliedAt: string }) => {
         try {
             const migration = await migrationsDir.loadFilesToBeMigrated(item.fileName);
+            console.log(migration)
             const migrationUp = migration.up;
+            console.log(`migrationUp: ${migrationUp}`)
             await migrationUp(ddb);
         } catch (error_) {
             const e = error_ as Error;

@@ -24,10 +24,10 @@ export function getFileLoader() {
             console.log('Using TsFileLoader')
             return new TsFileLoader();
         case cjsMigrationType:
-            console.log('Using TsFileLoader')
+            console.log('Using CjsFileLoader')
             return new CjsFileLoader();
         case mjsMigrationType:
-            console.log('Using TsFileLoader')
+            console.log('Using MjsFileLoader')
             return new MjsFileLoader();
         default:
             throw new Error('Unsupported migration type in config.json. Ensure migration type is ts,cjs or mjs');

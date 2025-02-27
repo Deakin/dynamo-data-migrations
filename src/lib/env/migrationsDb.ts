@@ -5,6 +5,7 @@ import * as config from './config';
 
 export async function getDdb(profile = 'default') {
     const awsConfig = await loadAwsConfig(profile);
+    console.log(awsConfig)
     return new AWS.DynamoDB({
         apiVersion: '2012-08-10',
         region: awsConfig.region,
