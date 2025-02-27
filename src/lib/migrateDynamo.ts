@@ -12,8 +12,8 @@ export const createAction = async (description: string) => {
     return create(description);
 };
 
-export const upAction = async (profile: string) => {
-    return up(profile);
+export const upAction = async (profile: string, event?: any) => {
+    return up(profile, event);
 };
 
 export const downAction = async (profile: string, downShift: number) => {

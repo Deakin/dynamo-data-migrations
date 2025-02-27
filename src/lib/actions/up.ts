@@ -9,23 +9,19 @@ class ERROR extends Error {
     migrated?: string[];
 }
 
-export async function up(profile = 'default') {
+export async function up(profile = 'default', event?: any) {
+    const { dryRun } = event.up
     const ddb = await migrationsDb.getDdb(profile);
-    console.log(ddb)
     if (!(await migrationsDb.doesMigrationsLogDbExists(ddb))) {
         await migrationsDb.configureMigrationsLogDbSchema(ddb);
     }
     const statusItems = await status(profile);
-    console.log(statusItems)
     const pendingItems = _.filter(statusItems, { appliedAt: 'PENDING' });
-    console.log(pendingItems)
     const migrated: string[] = [];
     const migrateItem = async (item: { fileName: string; appliedAt: string }) => {
         try {
             const migration = await migrationsDir.loadFilesToBeMigrated(item.fileName);
-            console.log(migration)
             const migrationUp = migration.up;
-            console.log(`migrationUp: ${migrationUp}`)
             await migrationUp(ddb);
         } catch (error_) {
             const e = error_ as Error;
@@ -40,13 +36,15 @@ export async function up(profile = 'default') {
             appliedAt: new Date().toJSON(),
         };
 
-        try {
-            await migrationsDb.addMigrationToMigrationsLogDb(migration, ddb);
-        } catch (error) {
-            const e = error as Error;
-            throw new Error(`Could not update migrationsLogDb: ${e.message}`);
+        if (dryRun === false){
+            try {
+                await migrationsDb.addMigrationToMigrationsLogDb(migration, ddb);
+            } catch (error) {
+                const e = error as Error;
+                throw new Error(`Could not update migrationsLogDb: ${e.message}`);
+            }
+            migrated.push(item.fileName);
         }
-        migrated.push(item.fileName);
     };
 
     await pEachSeries(pendingItems, migrateItem);
