@@ -11,6 +11,7 @@ class ERROR extends Error {
 
 export async function up(profile = 'default', event?: any) {
     const { dryRun } = event.up
+    console.log(`dryRun: ${dryRun}`)
     const ddb = await migrationsDb.getDdb(profile);
     if (!(await migrationsDb.doesMigrationsLogDbExists(ddb))) {
         await migrationsDb.configureMigrationsLogDbSchema(ddb);
