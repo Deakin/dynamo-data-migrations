@@ -58,7 +58,7 @@ program
     .addOption(profileOption)
     .option('--event <path>', 'Path to event file')
     .description('run all pending database migrations against a provided profile.')
-    .action(async (_, option) => {
+    .action(async (option) => {
         try {
             let event = {};
             if (option.event) {
