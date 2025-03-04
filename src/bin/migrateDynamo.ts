@@ -47,7 +47,7 @@ program
     .action(async (description) => {
         try {
             const fileName = await createAction(description);
-            console.info('Created: migrations/'.concat(fileName));
+            console.info('Created: migration-functions/'.concat(fileName));
         } catch (error) {
             console.error(error);
         }
