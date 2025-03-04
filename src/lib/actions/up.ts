@@ -19,7 +19,7 @@ export async function up(profile = 'default', event?: any) {
     if (!(await migrationsDb.doesMigrationsLogDbExists(ddb, migrationsTableName))) {
         await migrationsDb.configureMigrationsLogDbSchema(ddb, stack);
     }
-    const statusItems = await status(event, profile);
+    const statusItems = await status(profile, event);
     const pendingItems = _.filter(statusItems, { appliedAt: 'PENDING' });
     const migrated: string[] = [];
     const migrateItem = async (item: { fileName: string; appliedAt: string }) => {
