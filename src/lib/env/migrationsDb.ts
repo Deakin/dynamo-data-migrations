@@ -158,7 +158,6 @@ async function loadAwsConfig(inputProfile: string): Promise<AWSConfig> {
     };
 
     const configFromFile = await config.loadAWSConfig();
-    console.log(`configFromFile: ${configFromFile}`)
 
     // Check for data for input profile
     const profileConfig = configFromFile.find(
