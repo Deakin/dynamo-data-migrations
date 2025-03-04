@@ -10,11 +10,14 @@ class ERROR extends Error {
 }
 
 export async function up(profile = 'default', event?: any) {
-    const dryRun = event?.up?.dryRun ?? false
-    console.log(`dryRun: ${dryRun}`)
+    const dryRun = event?.dryRun ?? false
+    const stack = event?.stack ?? 'applicant-portal-api-ap1'
+    const migrationsTableName = `${stack}-migrations`
+    console.log(`Table: ${migrationsTableName}, Dry Run: ${dryRun}`)
+
     const ddb = await migrationsDb.getDdb(profile);
-    if (!(await migrationsDb.doesMigrationsLogDbExists(ddb))) {
-        await migrationsDb.configureMigrationsLogDbSchema(ddb);
+    if (!(await migrationsDb.doesMigrationsLogDbExists(ddb, migrationsTableName))) {
+        await migrationsDb.configureMigrationsLogDbSchema(ddb, stack);
     }
     const statusItems = await status(profile);
     const pendingItems = _.filter(statusItems, { appliedAt: 'PENDING' });
@@ -39,7 +42,7 @@ export async function up(profile = 'default', event?: any) {
 
         if (dryRun === false){
             try {
-                await migrationsDb.addMigrationToMigrationsLogDb(migration, ddb);
+                await migrationsDb.addMigrationToMigrationsLogDb(migration, ddb, stack);
             } catch (error) {
                 const e = error as Error;
                 throw new Error(`Could not update migrationsLogDb: ${e.message}`);

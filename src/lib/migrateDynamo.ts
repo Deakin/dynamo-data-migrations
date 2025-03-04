@@ -16,10 +16,10 @@ export const upAction = async (profile: string, event?: any) => {
     return up(profile, event);
 };
 
-export const downAction = async (profile: string, downShift: number) => {
-    return down(profile, downShift);
+export const downAction = async (profile: string, downShift: number, event?: any) => {
+    return down(profile, downShift, event);
 };
 
-export const statusAction = async (profile: string) => {
-    return status(profile);
+export const statusAction = async (profile: string, event?: any) => {
+    return status(profile, event);
 };
