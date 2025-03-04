@@ -46,11 +46,12 @@ export function loadMigrationsDir() {
 
 function loadConfig() {
     try {
+        console.log(`Path to migrations.config.json: ${paths.targetConfigPath}`)
         const contents = fs.readFileSync(paths.targetConfigPath, 'utf8');
         return JSON.parse(contents);
     } catch {
         throw new Error(
-            'Unable to load config, ensure config.json file exists, if not initialize it with init command',
+            'Unable to load config, ensure migrations.config.json file exists, if not initialize it with init command',
         );
     }
 }
