@@ -19,7 +19,7 @@ export async function up(profile = 'default', event?: any) {
     if (!(await migrationsDb.doesMigrationsLogDbExists(ddb, migrationsTableName))) {
         await migrationsDb.configureMigrationsLogDbSchema(ddb, stack);
     }
-    const statusItems = await status(profile);
+    const statusItems = await status(profile, event);
     const pendingItems = _.filter(statusItems, { appliedAt: 'PENDING' });
     const migrated: string[] = [];
     const migrateItem = async (item: { fileName: string; appliedAt: string }) => {
@@ -41,6 +41,7 @@ export async function up(profile = 'default', event?: any) {
         };
 
         if (dryRun === false){
+            console.log(`Dry Run = ${dryRun}. Adding migration to ${migrationsTableName}...`)
             try {
                 await migrationsDb.addMigrationToMigrationsLogDb(migration, ddb, stack);
             } catch (error) {

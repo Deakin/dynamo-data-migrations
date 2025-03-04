@@ -46,7 +46,6 @@ export function loadMigrationsDir() {
 
 function loadConfig() {
     try {
-        console.log(`Path to migrations.config.json: ${paths.targetConfigPath}`)
         const contents = fs.readFileSync(paths.targetConfigPath, 'utf8');
         return JSON.parse(contents);
     } catch {
