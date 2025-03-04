@@ -2,6 +2,7 @@ const { transformDynamoData, restoreFromBackup } = require("../src/functions/mig
 
 const event = {
   region: "ap-southeast-2",
+  stack: ${process.env.API_STACK}`,
   tableName: `${process.env.API_STACK}-table-name`,
   transformType: "delete/update/replace/add",
   fieldName: "column/attribute",
