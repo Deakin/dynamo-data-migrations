@@ -1,12 +1,21 @@
-const { transformDynamoData, restoreFromBackup } = require("./functions")
-const event = require("./migration-event")
+const { transformDynamoData, restoreFromBackup } = require("../src/functions/migration-functions/functions.cjs")
+
+const event = {
+  region: "ap-southeast-2",
+  tableName: `${process.env.API_STACK}-table-name`,
+  transformType: "delete/update/replace/add",
+  fieldName: "column/attribute",
+  updateToValue: "new-value",
+  replaceValue: "old-value",
+  dryRun: true/false
+}
 
 module.exports = {
   async up(ddb) {
-    await transformDynamoData(event);
+    await transformDynamoData(event)
   },
 
   async down(ddb) {
-    
-  },
-};
+    await restoreFromBackup(event)
+  }
+}
