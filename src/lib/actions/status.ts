@@ -1,7 +1,7 @@
 import * as migrationsDir from '../env/migrationsDir';
 import * as migrationsDb from '../env/migrationsDb';
 
-export async function status(event: any, profile = 'default') {
+export async function status(event?: any, profile = 'default') {
     const stack = event?.stack ?? 'applicant-portal-api-ap1'
     const migrationsTableName = `${stack}-migrations`
     console.log(`Table: ${migrationsTableName}`)

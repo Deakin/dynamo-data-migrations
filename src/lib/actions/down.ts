@@ -4,7 +4,7 @@ import { status } from './status';
 import * as migrationsDir from '../env/migrationsDir';
 import * as migrationsDb from '../env/migrationsDb';
 
-export async function down(profile = 'default', event: any, downShift = 1) {
+export async function down(profile = 'default', event?: any, downShift = 1) {
     const stack = event?.stack ?? 'applicant-portal-api-ap1'
     const migrationsTableName = `${stack}-migrations`
     const downgraded: string[] = [];
