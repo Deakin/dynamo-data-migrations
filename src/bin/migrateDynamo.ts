@@ -4,6 +4,8 @@ import Table from 'cli-table3';
 import _, { isEmpty } from 'lodash';
 import packageJson from '../../package.json';
 import { initAction, createAction, upAction, statusAction, downAction } from '../lib/migrateDynamo';
+import fs from "fs";
+import path from "path";
 
 class ERROR extends Error {
     migrated?: string[];
@@ -54,10 +56,22 @@ program
 program
     .command('up')
     .addOption(profileOption)
+    .option('--event <path>', 'Path to event file')
     .description('run all pending database migrations against a provided profile.')
     .action(async (option) => {
         try {
-            const migrated = await upAction(option.profile);
+            let event = {};
+            if (option.event) {
+                const eventPath = path.resolve(option.event);
+                if (fs.existsSync(eventPath)) {
+                    event = require(eventPath);
+                } else {
+                    console.error(`Event file not found: ${eventPath}`);
+                    process.exit(1);
+                }
+            }
+
+            const migrated = await upAction(option.profile, event);
             printMigrated(migrated, 'MIGRATED UP');
         } catch (error) {
             console.error(error);
@@ -69,6 +83,7 @@ program
 program
     .command('down')
     .addOption(profileOption)
+    .option('--event <path>', 'Path to event file')
     .option(
         '--shift <n>',
         'Number of down shift to perform. 0 will rollback all changes',
@@ -78,7 +93,18 @@ program
     .description('undo the last applied database migration against a provided profile.')
     .action(async (option) => {
         try {
-            const migrated = await downAction(option.profile, option.shift);
+            let event = {};
+            if (option.event) {
+                const eventPath = path.resolve(option.event);
+                if (fs.existsSync(eventPath)) {
+                    event = require(eventPath);
+                } else {
+                    console.error(`Event file not found: ${eventPath}`);
+                    process.exit(1);
+                }
+            }
+
+            const migrated = await downAction(option.profile, option.shift, event);
             printMigrated(migrated, 'MIGRATED DOWN');
         } catch (error) {
             console.error(error);
@@ -88,10 +114,22 @@ program
 program
     .command('status')
     .addOption(profileOption)
+    .option('--event <path>', 'Path to event file')
     .description('print the changelog of the database against a provided profile')
     .action(async (option) => {
         try {
-            const statusItems = await statusAction(option.profile);
+            let event = {};
+            if (option.event) {
+                const eventPath = path.resolve(option.event);
+                if (fs.existsSync(eventPath)) {
+                    event = require(eventPath);
+                } else {
+                    console.error(`Event file not found: ${eventPath}`);
+                    process.exit(1);
+                }
+            }
+
+            const statusItems = await statusAction(option.profile, event);
             printStatusTable(statusItems);
         } catch (error) {
             console.error(error);

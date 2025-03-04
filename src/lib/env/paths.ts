@@ -9,4 +9,5 @@ export const tsExtension = '.ts';
 export const cjsExtension = '.cjs';
 
 export const configJsonPath = path.join(__dirname, `../../config.json`);
-export const targetConfigPath = path.join(process.cwd(), 'config.json');
+export const targetConfigPath = path.join(process.cwd(), 'migrations.config.json');
+export const tsConfigPath = path.join(process.cwd(), 'tsconfig.json');
