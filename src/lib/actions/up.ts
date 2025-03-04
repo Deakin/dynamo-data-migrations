@@ -43,7 +43,7 @@ export async function up(profile = 'default', event?: any) {
         if (dryRun === false){
             console.log(`Dry Run = ${dryRun}. Adding migration to ${migrationsTableName}...`)
             try {
-                await migrationsDb.addMigrationToMigrationsLogDb(migration, ddb, stack);
+                await migrationsDb.addMigrationToMigrationsLogDb(migration, ddb, migrationsTableName);
             } catch (error) {
                 const e = error as Error;
                 throw new Error(`Could not update migrationsLogDb: ${e.message}`);
