@@ -9,12 +9,17 @@ class ERROR extends Error {
     migrated?: string[];
 }
 
-export async function up(profile = 'default') {
+export async function up(profile = 'default', event?: any) {
+    const dryRun = event?.dryRun ?? false
+    const stack = event?.stack ?? 'applicant-portal-api-ap1'
+    const migrationsTableName = `${stack}-migrations`
+    console.log(`Table: ${migrationsTableName}, Dry Run: ${dryRun}`)
+
     const ddb = await migrationsDb.getDdb(profile);
-    if (!(await migrationsDb.doesMigrationsLogDbExists(ddb))) {
-        await migrationsDb.configureMigrationsLogDbSchema(ddb);
+    if (!(await migrationsDb.doesMigrationsLogDbExists(ddb, migrationsTableName))) {
+        await migrationsDb.configureMigrationsLogDbSchema(ddb, stack);
     }
-    const statusItems = await status(profile);
+    const statusItems = await status(event, profile);
     const pendingItems = _.filter(statusItems, { appliedAt: 'PENDING' });
     const migrated: string[] = [];
     const migrateItem = async (item: { fileName: string; appliedAt: string }) => {
@@ -35,13 +40,16 @@ export async function up(profile = 'default') {
             appliedAt: new Date().toJSON(),
         };
 
-        try {
-            await migrationsDb.addMigrationToMigrationsLogDb(migration, ddb);
-        } catch (error) {
-            const e = error as Error;
-            throw new Error(`Could not update migrationsLogDb: ${e.message}`);
+        if (dryRun === false){
+            console.log(`Dry Run = ${dryRun}. Adding migration to ${migrationsTableName}...`)
+            try {
+                await migrationsDb.addMigrationToMigrationsLogDb(migration, ddb, migrationsTableName);
+            } catch (error) {
+                const e = error as Error;
+                throw new Error(`Could not update migrationsLogDb: ${e.message}`);
+            }
+            migrated.push(item.fileName);
         }
-        migrated.push(item.fileName);
     };
 
     await pEachSeries(pendingItems, migrateItem);

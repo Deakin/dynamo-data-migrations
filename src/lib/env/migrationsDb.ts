@@ -23,7 +23,9 @@ export type AWSConfig = {
     sessionToken: string;
 };
 
-export async function configureMigrationsLogDbSchema(ddb: AWS.DynamoDB, maxWaitTimeForTableCreation = 120) {
+export async function configureMigrationsLogDbSchema(ddb: AWS.DynamoDB, stack: string, maxWaitTimeForTableCreation = 120) {
+    const migrationsTableName = `${stack}-migrations`
+
     const params: CreateTableCommandInput = {
         AttributeDefinitions: [
             {
@@ -49,7 +51,7 @@ export async function configureMigrationsLogDbSchema(ddb: AWS.DynamoDB, maxWaitT
             ReadCapacityUnits: 5,
             WriteCapacityUnits: 5,
         },
-        TableName: 'MIGRATIONS_LOG_DB',
+        TableName: migrationsTableName,
         StreamSpecification: {
             StreamEnabled: false,
         },
@@ -59,7 +61,7 @@ export async function configureMigrationsLogDbSchema(ddb: AWS.DynamoDB, maxWaitT
     try {
         const tableExists = await waitUntilTableExists(
             { client: ddb, maxWaitTime: maxWaitTimeForTableCreation },
-            { TableName: 'MIGRATIONS_LOG_DB' },
+            { TableName: migrationsTableName },
         );
         if (tableExists.state === 'SUCCESS') {
             return await Promise.resolve();
@@ -70,9 +72,9 @@ export async function configureMigrationsLogDbSchema(ddb: AWS.DynamoDB, maxWaitT
     }
 }
 
-export async function addMigrationToMigrationsLogDb(item: { fileName: string; appliedAt: string }, ddb: AWS.DynamoDB) {
+export async function addMigrationToMigrationsLogDb(item: { fileName: string; appliedAt: string }, ddb: AWS.DynamoDB, migrationsTableName: string) {
     const params = {
-        TableName: 'MIGRATIONS_LOG_DB',
+        TableName: migrationsTableName,
         Item: {
             FILE_NAME: { S: item.fileName },
             APPLIED_AT: { S: item.appliedAt },
@@ -91,9 +93,10 @@ export async function addMigrationToMigrationsLogDb(item: { fileName: string; ap
 export async function deleteMigrationFromMigrationsLogDb(
     item: { fileName: string; appliedAt: string },
     ddb: AWS.DynamoDB,
+    migrationsTableName: string
 ) {
     const params = {
-        TableName: 'MIGRATIONS_LOG_DB',
+        TableName: migrationsTableName,
         Key: {
             FILE_NAME: { S: item.fileName },
             APPLIED_AT: { S: item.appliedAt },
@@ -108,9 +111,9 @@ export async function deleteMigrationFromMigrationsLogDb(
     }
 }
 
-export async function doesMigrationsLogDbExists(ddb: AWS.DynamoDB) {
+export async function doesMigrationsLogDbExists(ddb: AWS.DynamoDB, migrationsTableName: string) {
     const params = {
-        TableName: 'MIGRATIONS_LOG_DB',
+        TableName: migrationsTableName,
     };
     try {
         const data = await ddb.describeTable(params);
@@ -120,11 +123,11 @@ export async function doesMigrationsLogDbExists(ddb: AWS.DynamoDB) {
     }
 }
 
-export async function getAllMigrations(ddb: AWS.DynamoDB) {
+export async function getAllMigrations(ddb: AWS.DynamoDB, migrationsTableName: string ) {
     const migrations: { FILE_NAME?: string; APPLIED_AT?: string }[] = [];
     const recursiveProcess = async (lastEvaluatedKey?: Record<string, AttributeValue>) => {
         const params = {
-            TableName: 'MIGRATIONS_LOG_DB',
+            TableName: migrationsTableName,
             ExclusiveStartKey: lastEvaluatedKey,
         };
 
@@ -155,6 +158,7 @@ async function loadAwsConfig(inputProfile: string): Promise<AWSConfig> {
     };
 
     const configFromFile = await config.loadAWSConfig();
+    console.log(`configFromFile: ${configFromFile}`)
 
     // Check for data for input profile
     const profileConfig = configFromFile.find(

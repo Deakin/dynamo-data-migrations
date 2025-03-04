@@ -27,6 +27,8 @@ jest.mock("@aws-sdk/credential-providers", () => ({
 describe("migrationsDb", () => {
 
     const dynamoMock = mockClient(DynamoDBClient);
+    const event = { stack: 'app-portal', dryRun: false }
+    const migrationsTableName = `${event.stack}-profiles`
 
     afterEach(() => dynamoMock.reset());
 
@@ -34,24 +36,24 @@ describe("migrationsDb", () => {
         it("should resolve when no errors are thrown while creating migrationsLogDb", async () => {
             dynamoMock.on(CreateTableCommand).resolves({})
             dynamoMock.on(DescribeTableCommand).resolves({ Table: { TableStatus: "ACTIVE" } })
-            await expect(migrationsDb.configureMigrationsLogDbSchema(new AWS.DynamoDB({ apiVersion: '2012-08-10' }))).resolves.not.toThrow();
+            await expect(migrationsDb.configureMigrationsLogDbSchema(new AWS.DynamoDB({ apiVersion: '2012-08-10' }), event.stack)).resolves.not.toThrow();
         })
 
         it("should reject when error is thrown while creating migrationsLogDb", async () => {
             dynamoMock.on(CreateTableCommand).rejects(new Error("Could not create table Migrations_Log"));
-            await expect(migrationsDb.configureMigrationsLogDbSchema(new AWS.DynamoDB({ apiVersion: '2012-08-10' }))).rejects.toThrowError("Could not create table Migrations_Log");
+            await expect(migrationsDb.configureMigrationsLogDbSchema(new AWS.DynamoDB({ apiVersion: '2012-08-10' }), event.stack)).rejects.toThrowError("Could not create table Migrations_Log");
         })
 
         it("should reject when error is thrown while waiting for migrationsLogDb table to be active - Table is creating", async () => {
             dynamoMock.on(CreateTableCommand).resolves({})
             dynamoMock.on(DescribeTableCommand).resolves({ Table: { TableStatus: "CREATING" } })
-            await expect(migrationsDb.configureMigrationsLogDbSchema(new AWS.DynamoDB({ apiVersion: '2012-08-10' }), 1)).rejects.toThrowError("Migration table does not exist!");
+            await expect(migrationsDb.configureMigrationsLogDbSchema(new AWS.DynamoDB({ apiVersion: '2012-08-10' }), event.stack, 1)).rejects.toThrowError("Migration table does not exist!");
         })
 
         it("should reject when error is thrown while waiting for migrationsLogDb table to be active - Table is completely missing", async () => {
             dynamoMock.on(CreateTableCommand).resolves({})
             dynamoMock.on(DescribeTableCommand).rejects(new Error("Table does not exist!"))
-            await expect(migrationsDb.configureMigrationsLogDbSchema(new AWS.DynamoDB({ apiVersion: '2012-08-10' }), 1)).rejects.toThrowError("Migration table does not exist!");
+            await expect(migrationsDb.configureMigrationsLogDbSchema(new AWS.DynamoDB({ apiVersion: '2012-08-10' }), event.stack, 1)).rejects.toThrowError("Migration table does not exist!");
         })
     })
 
@@ -59,12 +61,12 @@ describe("migrationsDb", () => {
     describe("addMigrationToMigrationsLogDb()", () => {
         it("should resolve when no errors are thrown while adding migration to migrationsLogDb", async () => {
             dynamoMock.on(PutItemCommand).resolves({})
-            await expect(migrationsDb.addMigrationToMigrationsLogDb({ fileName: "abc.ts", appliedAt: "20201014172343" }, new AWS.DynamoDB({ apiVersion: '2012-08-10' }))).resolves.not.toThrow();
+            await expect(migrationsDb.addMigrationToMigrationsLogDb({ fileName: "abc.ts", appliedAt: "20201014172343" }, new AWS.DynamoDB({ apiVersion: '2012-08-10' }), migrationsTableName)).resolves.not.toThrow();
         })
 
         it("should reject when error is thrown while adding migration to migrationsLogDb", async () => {
             dynamoMock.on(PutItemCommand).rejects(new Error("Resource Not Found"))
-            await expect(migrationsDb.addMigrationToMigrationsLogDb({ fileName: "abc.ts", appliedAt: "20201014172343" }, new AWS.DynamoDB({ apiVersion: '2012-08-10' }))).rejects.toThrow("Resource Not Found");
+            await expect(migrationsDb.addMigrationToMigrationsLogDb({ fileName: "abc.ts", appliedAt: "20201014172343" }, new AWS.DynamoDB({ apiVersion: '2012-08-10' }), migrationsTableName)).rejects.toThrow("Resource Not Found");
         })
     })
 
@@ -76,7 +78,7 @@ describe("migrationsDb", () => {
                 fileName: "123.ts",
                 appliedAt: "123"
             };
-            await expect(migrationsDb.deleteMigrationFromMigrationsLogDb(item, new AWS.DynamoDB({ apiVersion: '2012-08-10' }))).resolves.not.toThrow();
+            await expect(migrationsDb.deleteMigrationFromMigrationsLogDb(item, new AWS.DynamoDB({ apiVersion: '2012-08-10' }), migrationsTableName)).resolves.not.toThrow();
 
         })
 
@@ -87,7 +89,7 @@ describe("migrationsDb", () => {
                 fileName: "123.ts",
                 appliedAt: "123"
             };
-            await expect(migrationsDb.deleteMigrationFromMigrationsLogDb(item, new AWS.DynamoDB({ apiVersion: '2012-08-10' }))).rejects.toThrow("Could not delete migration");
+            await expect(migrationsDb.deleteMigrationFromMigrationsLogDb(item, new AWS.DynamoDB({ apiVersion: '2012-08-10' }), migrationsTableName)).rejects.toThrow("Could not delete migration");
 
         })
     })
@@ -95,13 +97,13 @@ describe("migrationsDb", () => {
     describe("doesMigrationsLogDbExists()", () => {
         it("should resolve when no errors are thrown while describing migrationsLogDb", async () => {
             dynamoMock.on(DescribeTableCommand).resolves({})
-            await expect(migrationsDb.doesMigrationsLogDbExists(new AWS.DynamoDB({ apiVersion: '2012-08-10' }))).resolves.toBeTruthy();
+            await expect(migrationsDb.doesMigrationsLogDbExists(new AWS.DynamoDB({ apiVersion: '2012-08-10' }), migrationsTableName)).resolves.toBeTruthy();
 
         })
 
         it("should reject when error is thrown while describing migrationsLogDb", async () => {
             dynamoMock.on(DescribeTableCommand).rejects(new Error("Resource Not Found"));
-            await expect(migrationsDb.doesMigrationsLogDbExists(new AWS.DynamoDB({ apiVersion: '2012-08-10' }))).resolves.toBeFalsy();
+            await expect(migrationsDb.doesMigrationsLogDbExists(new AWS.DynamoDB({ apiVersion: '2012-08-10' }), migrationsTableName)).resolves.toBeFalsy();
         })
     })
 
@@ -118,7 +120,7 @@ describe("migrationsDb", () => {
 
             dynamoMock.on(ScanCommand).resolves({ Items })
 
-            const migrations = await migrationsDb.getAllMigrations(new AWS.DynamoDB({ apiVersion: '2012-08-10' }));
+            const migrations = await migrationsDb.getAllMigrations(new AWS.DynamoDB({ apiVersion: '2012-08-10' }), migrationsTableName);
             expect(migrations).toStrictEqual([{ FILE_NAME: "abc.ts", APPLIED_AT: "123" }, { FILE_NAME: "def.ts", APPLIED_AT: "124" }]);
 
         });
@@ -146,7 +148,7 @@ describe("migrationsDb", () => {
             ]
 
             dynamoMock.on(ScanCommand).resolvesOnce({ Items: Items1, LastEvaluatedKey }).resolvesOnce({ Items: Items2 })
-            const migrations = await migrationsDb.getAllMigrations(new AWS.DynamoDB({ apiVersion: '2012-08-10' }));
+            const migrations = await migrationsDb.getAllMigrations(new AWS.DynamoDB({ apiVersion: '2012-08-10' }), migrationsTableName);
             expect(migrations).toStrictEqual([{ FILE_NAME: "1.ts", APPLIED_AT: "1" }, { FILE_NAME: "2.ts", APPLIED_AT: "2" }, { FILE_NAME: "3.ts", APPLIED_AT: "3" }]);
 
         })
