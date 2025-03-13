@@ -2,7 +2,7 @@
 import * as tsImport from 'ts-import';
 
 export async function importFile(importPath: string) {
-    return tsImport.load(importPath);
+    return tsImport.load(importPath, { allowConfigurationWithComments: true });
 }
 
 export async function importCjs(importPath: string) {
