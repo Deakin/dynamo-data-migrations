@@ -1,9 +1,33 @@
-import * as AWS from '@aws-sdk/client-dynamodb';
+import { transformDynamoData, restoreFromBackup } from '../src/functions/migration-functions/functions.cjs'
 
-export async function up(ddb: AWS.DynamoDB) {
-    // TODO write your migration here.
+interface Event {
+  region: string
+  stack: string
+  tableName: string
+  transformType: 'delete' | 'update' | 'replace' | 'add'
+  fieldName: string
+  updateToValue?: string
+  replaceValue?: string
+  dryRun: boolean
 }
 
-export async function down(ddb: AWS.DynamoDB) {
-    // TODO write the statements to rollback your migration 
+const event: Event = {
+  region: 'ap-southeast-2',
+  stack: `${process.env.API_STACK}`,
+  tableName: `${process.env.API_STACK}-<table-name>`,
+  transformType: 'delete' | 'update' | 'replace' | 'add',
+  fieldName: 'column/attribute',
+  updateToValue: 'new-value',
+  replaceValue: 'old-value',
+  dryRun: true
+}
+
+export default {
+  async up(ddb?: unknown) {
+    await transformDynamoData(event)
+  },
+
+  async down(ddb?: unknown) {
+    await restoreFromBackup(event)
+  }
 }
