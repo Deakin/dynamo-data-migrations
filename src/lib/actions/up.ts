@@ -10,10 +10,10 @@ class ERROR extends Error {
 }
 
 export async function up(profile = 'default', event?: any) {
-    console.log(`event: ${event}`)
     const dryRun = event?.dryRun ?? false
     const stack = event?.stack ?? 'applicant-portal-api-ap1'
     const migrationsTableName = `${stack}-migrations`
+    
     console.log(`Table: ${migrationsTableName}, Dry Run: ${dryRun}`)
 
     const ddb = await migrationsDb.getDdb(profile);
