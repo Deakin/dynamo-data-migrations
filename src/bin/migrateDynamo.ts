@@ -53,23 +53,28 @@ program
         }
     });
 
-program
+    program
     .command('up')
     .addOption(profileOption)
     .option('--event <path>', 'Path to event file')
     .description('run all pending database migrations against a provided profile.')
     .action(async (option) => {
+        console.log(`option: ${option}`)
         try {
             let event = {};
             if (option.event) {
+                console.log('Yes event option')
                 const eventPath = path.resolve(option.event);
+                console.log(`eventPath: ${eventPath}`)
                 if (fs.existsSync(eventPath)) {
                     event = require(eventPath);
+                    console.log(`event: ${event}`)
                 } else {
                     console.error(`Event file not found: ${eventPath}`);
                     process.exit(1);
                 }
             }
+            console.log('No event option')
 
             const migrated = await upAction(option.profile, event);
             printMigrated(migrated, 'MIGRATED UP');
