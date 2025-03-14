@@ -10,8 +10,6 @@ class ERROR extends Error {
 }
 
 export async function up(profile = 'default', migrationsTableName: string, dryRun: boolean) {
-    console.log(`Table: ${migrationsTableName}, Dry Run: ${dryRun}`)
-
     const ddb = await migrationsDb.getDdb(profile);
     if (!(await migrationsDb.doesMigrationsLogDbExists(ddb, migrationsTableName))) {
         await migrationsDb.configureMigrationsLogDbSchema(ddb, migrationsTableName);
