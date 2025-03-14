@@ -57,7 +57,7 @@ program
     .command('up')
     .addOption(profileOption)
     .option('--migrations-table <table-name>, -t <table-name>', 'Migrations table name')
-    .option('--dry-run, -d', 'Run migrations in dry-run mode')
+    .option('--dry-run, -d', 'Run migrations in dry-run mode', false)
     .description('Run all pending database migrations against a provided profile.')
     .action(async (option) => {
         console.log(`option: ${JSON.stringify(option)}`)
