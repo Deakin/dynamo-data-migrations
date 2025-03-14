@@ -4,21 +4,22 @@ import { status } from './status';
 import * as migrationsDir from '../env/migrationsDir';
 import * as migrationsDb from '../env/migrationsDb';
 
-export async function down(profile = 'default', event?: any, downShift = 1) {
-    const stack = event?.stack ?? 'applicant-portal-api-ap1'
-    const migrationsTableName = `${stack}-migrations`
+export async function down(profile = 'default', downShift = 1, migrationsTableName: string, dryRun: boolean) {
     const downgraded: string[] = [];
-    const statusItems = await status(profile);
+    const statusItems = await status(profile, migrationsTableName);
     const appliedItems = statusItems.filter((item) => item.appliedAt !== 'PENDING');
     const ddb = await migrationsDb.getDdb(profile);
+
     const rolledBackItem = async (item: { fileName: string; appliedAt: string }) => {
         await executeDown(ddb, item, migrationsTableName);
         downgraded.push(item.fileName);
     };
+
     await pEachSeries(
         appliedItems.slice(-(downShift === 0 ? appliedItems.length : downShift)).reverse(),
         rolledBackItem,
     );
+
     return downgraded;
 }
 

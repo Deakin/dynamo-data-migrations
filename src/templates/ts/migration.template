@@ -1,33 +1,14 @@
-import { transformDynamoData, restoreFromBackup } from '../src/functions/migration-functions/functions.cjs'
+import * as AWS from '@aws-sdk/client-dynamodb'
+import { TransformEvent, TransformType, transformDynamoData } from '../lib/transform-functions'
 
-interface Event {
-  region: string
-  stack: string
-  tableName: string
-  transformType: 'delete' | 'update' | 'replace' | 'add'
-  fieldName: string
-  updateToValue?: string
-  replaceValue?: string
-  dryRun: boolean
+const event: TransformEvent = {
+  table: `${process.env.API_STACK}-<table-name>`,
+  field: '<column-name>',
+  transformType: TransformType,
+  updateToValue: '<new-value>',
+  replaceValue: '<old-value>'
 }
 
-const event: Event = {
-  region: 'ap-southeast-2',
-  stack: `${process.env.API_STACK}`,
-  tableName: `${process.env.API_STACK}-<table-name>`,
-  transformType: 'delete' | 'update' | 'replace' | 'add',
-  fieldName: 'column/attribute',
-  updateToValue: 'new-value',
-  replaceValue: 'old-value',
-  dryRun: true
-}
-
-export default {
-  async up(ddb?: unknown) {
-    await transformDynamoData(event)
-  },
-
-  async down(ddb?: unknown) {
-    await restoreFromBackup(event)
-  }
+export async function up(ddb: unknown, dryRun: boolean) {
+  await transformDynamoData(event, dryRun)
 }
