@@ -4,6 +4,8 @@ import * as migrationsDb from '../env/migrationsDb';
 export async function status(profile = 'default', migrationsTableName: string) {
     const ddb = await migrationsDb.getDdb(profile);
     if (!(await migrationsDb.doesMigrationsLogDbExists(ddb, migrationsTableName))) {
+        console.log('No migrations table exists...')
+        console.log(`Creating ${migrationsTableName}`)
         await migrationsDb.configureMigrationsLogDbSchema(ddb, migrationsTableName);
     }
     const fileNamesInMigrationFolder = migrationsDir.getFileNamesInMigrationFolder();

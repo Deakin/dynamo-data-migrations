@@ -12,6 +12,8 @@ class ERROR extends Error {
 export async function up(profile = 'default', migrationsTableName: string, dryRun: boolean) {
     const ddb = await migrationsDb.getDdb(profile);
     if (!(await migrationsDb.doesMigrationsLogDbExists(ddb, migrationsTableName))) {
+        console.log('No migrations table exists...')
+        console.log(`Creating ${migrationsTableName}`)
         await migrationsDb.configureMigrationsLogDbSchema(ddb, migrationsTableName);
     }
     const statusItems = await status(profile, migrationsTableName);
