@@ -33,23 +33,23 @@ describe("status", () => {
     it("should yield an error when the migrations directory does not exist", async () => {
         migrationsDirGetFileNames.mockRestore();
         jest.spyOn(config,"loadMigrationsDir").mockReturnValue("/migrations");
-        await expect(status()).rejects.toThrow("Please ensure migrations directory as specified in config.json is present");
+        await expect(status('default', 'table')).rejects.toThrow("Please ensure migrations directory as specified in config.json is present");
     });
 
 
     it("should yield errors that occurred when getting the list of files in the migrations directory", async () => {
         migrationsDirGetFileNames.mockImplementation(() => { throw new Error("File system unavailable") });
-        await expect(status()).rejects.toThrow("File system unavailable");
+        await expect(status('default', 'table')).rejects.toThrow("File system unavailable");
     });
 
 
     it("should yield errors that occurred when fetching the migrationsLogDb collection", async () => {
         migrationsDbGetAllMigrations.mockImplementation(() => { throw new Error("Cannot read from the database") });
-        await expect(status()).rejects.toThrow("Cannot read from the database");
+        await expect(status('default', 'table')).rejects.toThrow("Cannot read from the database");
     });
 
     it("should yield an array that indicates the status of the migrations in the directory", async () => {
-        const statusItems = await status();
+        const statusItems = await status('default', 'table');
         expect(statusItems).toEqual([
             {
                 appliedAt: "2016-06-03T20:10:12.123Z",
