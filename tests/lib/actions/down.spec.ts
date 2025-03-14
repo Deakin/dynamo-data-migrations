@@ -46,19 +46,19 @@ describe("down", () => {
                 { fileName: "20160609113224-some_migration.js", appliedAt: "PENDING" }
             ])
         );
-        const migrated = await down();
+        const migrated = await down('default', 1, 'table', false);
         expect(migrated).toEqual([]);
     });
 
     it("should load the last n applied migration", async () => {
-        await down('default', 2);
+        await down('default', 2, 'table', false);
         expect(migrationsDirLoadMigration).toBeCalledTimes(2);
         expect(migrationsDirLoadMigration).nthCalledWith(1, "20160609113225-last_migration.ts");
         expect(migrationsDirLoadMigration).nthCalledWith(2, "20160609113224-first_migration.ts");
     });
 
     it("should downgrade all applied migrations when passed with downShift=0", async () => {
-        const items = await down('default', 0);
+        const items = await down('default', 0, 'table', false);
         expect(migrationsDirLoadMigration).toBeCalledTimes(2);
         expect(migrationsDirLoadMigration).nthCalledWith(1, "20160609113225-last_migration.ts");
         expect(migrationsDirLoadMigration).nthCalledWith(2, "20160609113224-first_migration.ts");
@@ -68,7 +68,7 @@ describe("down", () => {
     });
 
     it("should downgrade the last applied migration when downShift parameter is not passed", async () => {
-        const items = await down();
+        const items = await down('default', 1, 'table', false);
         expect(migration.down).toBeCalled();
         expect(migrationsDirLoadMigration).toBeCalledTimes(1);
         expect(migrationsDirLoadMigration).toBeCalledWith("20160609113225-last_migration.ts");
@@ -78,14 +78,14 @@ describe("down", () => {
 
     it("should yield an error when an error occurred during the downgrade", async () => {
         migration.down.mockReturnValue(Promise.reject(new Error("Invalid syntax")));
-        await expect(down()).rejects.toThrow("Could not migrate down 20160609113225-last_migration.ts: Invalid syntax");
+        await expect(down('default', 1, 'table', false)).rejects.toThrow("Could not migrate down 20160609113225-last_migration.ts: Invalid syntax");
     });
 
     it("should yield errors that occurred when deleting from the migrationsLogDb", async () => {
         migrationsDbDeleteMigrationFromMigrationsLogDb.mockReturnValue(
             Promise.reject(new Error("Could not delete"))
         );
-        await expect(down()).rejects.toThrow("Could not update migrationsLogDb: Could not delete");
+        await expect(down('default', 1, 'table', false)).rejects.toThrow("Could not update migrationsLogDb: Could not delete");
     });
 
 });

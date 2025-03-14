@@ -117,11 +117,11 @@ async function executeAndAssert(ddb: DynamoDB) {
 }
 
 async function validateAllRollback(ddb: AWS.DynamoDB) {
-  const rolledBackFiles = await down('default', 0);
+  const rolledBackFiles = await down('default', 0, 'table', false);
   expect(rolledBackFiles).toHaveLength(2);
   expect(rolledBackFiles[0]).toEqual(migrationFile2);
   expect(rolledBackFiles[1]).toEqual(migrationFile1);
-  const migrations = await status();
+  const migrations = await status('default', 'table');
   expect(migrations).toHaveLength(3);
   expect(migrations[0].appliedAt).toEqual('PENDING');
   expect(migrations[1].appliedAt).toEqual('PENDING');
@@ -132,7 +132,7 @@ async function validateAllRollback(ddb: AWS.DynamoDB) {
 async function validateOneUp(ddb: AWS.DynamoDB) {
   let migrated: string[];
   try {
-    migrated = await up();
+    migrated = await up('default', 'table', false);
   }
   catch (error) {
     const e = error as ERROR;
@@ -140,7 +140,7 @@ async function validateOneUp(ddb: AWS.DynamoDB) {
   };
   expect(migrated).toHaveLength(1);
   expect(migrated[0]).toEqual(migrationFile2);
-  const migrations = await status();
+  const migrations = await status('default', 'table');
   expect(migrations).toHaveLength(3);
   expect(migrations[0].appliedAt).not.toEqual('PENDING');
   expect(migrations[1].appliedAt).not.toEqual('PENDING');
@@ -150,10 +150,10 @@ async function validateOneUp(ddb: AWS.DynamoDB) {
 }
 
 async function validateOneRollback(ddb: AWS.DynamoDB) {
-  const rolledBackFiles = await down()
+  const rolledBackFiles = await down('default', 0, 'table', false)
   expect(rolledBackFiles).toHaveLength(1);
   expect(rolledBackFiles[0]).toEqual(migrationFile2);
-  const migrations = await status();
+  const migrations = await status('default', 'table');
   expect(migrations).toHaveLength(3);
   expect(migrations[0].appliedAt).not.toEqual('PENDING');
   expect(migrations[1].appliedAt).toEqual('PENDING');
@@ -164,7 +164,7 @@ async function validateOneRollback(ddb: AWS.DynamoDB) {
 async function validateAllUp(ddb: AWS.DynamoDB) {
   let migrated: string[];
   try {
-    migrated = await up();
+    migrated = await up('default', 'table', false);
   }
   catch (error) {
     const e = error as ERROR;
@@ -173,7 +173,7 @@ async function validateAllUp(ddb: AWS.DynamoDB) {
   expect(migrated).toHaveLength(2);
   expect(migrated[0]).toEqual(migrationFile1);
   expect(migrated[1]).toEqual(migrationFile2);
-  const migrations = await status();
+  const migrations = await status('default', 'table');
   expect(migrations).toHaveLength(3);
   expect(migrations[0].appliedAt).not.toEqual('PENDING');
   expect(migrations[1].appliedAt).not.toEqual('PENDING');
