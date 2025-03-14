@@ -60,26 +60,25 @@ program
     .option('-d, --dry-run', 'Run migrations in dry-run mode', false)
     .description('Run all pending database migrations against a provided profile.')
     .action(async (option) => {
-        console.log(`option: ${JSON.stringify(option)}`)
         let dryRun = false
         try {
-            if (option.dryRun){
-                dryRun = true                
-            }
+            if (option.dryRun){ dryRun = true }
+
             const migrated = await upAction(option.profile, option.migrationsTable, dryRun);
+            
             printMigrated(migrated, 'MIGRATED UP');
         } catch (error) {
             console.error(error);
             const e = error as ERROR;
-            printMigrated(e.migrated, 'MIGRATED UP');
+            printMigrated(e.migrated, 'ERROR MIGRATING UP');
         }
     });
 
 program
     .command('down')
     .addOption(profileOption)
-    .option('--migrations-table <table-name>, -t <table-name>', 'Migrations table name')
-    .option('--dry-run, -d', 'Run migrations in dry-run mode')
+    .option('-t, --migrations-table <table-name>', 'Migrations table name')
+    .option('-d, --dry-run', 'Run migrations in dry-run mode', false)
     .option(
         '--shift <n>',
         'Number of down shift to perform. 0 will rollback all changes',
@@ -88,12 +87,10 @@ program
     )
     .description('undo the last applied database migration against a provided profile.')
     .action(async (option) => {
-        console.log(`option: ${JSON.stringify(option)}`)
+        let dryRun = false
         try {
-            let dryRun = false
-            if (option.dryRun){
-                dryRun = true                
-            }
+
+            if (option.dryRun){ dryRun = true }
 
             const migrated = await downAction(option.profile, option.shift, option.migrationsTable, dryRun);
 
@@ -106,22 +103,11 @@ program
 program
     .command('status')
     .addOption(profileOption)
-    .option('--event <path>', 'Path to event file')
+    .option('-t, --migrations-table <table-name>', 'Migrations table name')
     .description('print the changelog of the database against a provided profile')
     .action(async (option) => {
         try {
-            let event = {};
-            if (option.event) {
-                const eventPath = path.resolve(option.event);
-                if (fs.existsSync(eventPath)) {
-                    event = require(eventPath);
-                } else {
-                    console.error(`Event file not found: ${eventPath}`);
-                    process.exit(1);
-                }
-            }
-
-            const statusItems = await statusAction(option.profile, event);
+            const statusItems = await statusAction(option.profile, option.migrationsTable);
             printStatusTable(statusItems);
         } catch (error) {
             console.error(error);
