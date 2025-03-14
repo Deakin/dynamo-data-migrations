@@ -56,7 +56,7 @@ program
 program
     .command('up')
     .addOption(profileOption)
-    .option('-t <table-name>, --migrations-table <table-name>', 'Migrations table name')
+    .option('-t, --migrations-table <table-name>', 'Migrations table name')
     .option('-d, --dry-run', 'Run migrations in dry-run mode', false)
     .description('Run all pending database migrations against a provided profile.')
     .action(async (option) => {
