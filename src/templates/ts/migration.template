@@ -1,18 +1,14 @@
+import * as AWS from '@aws-sdk/client-dynamodb'
 import { TransformEvent, TransformType, transformDynamoData } from '../lib/functions'
 
 const event: TransformEvent = {
-  region: 'ap-southeast-2',
   table: `${process.env.API_STACK}-<table-name>`,
-  field: 'column/attribute',
-  transformType: 'delete' | 'update' | 'replace' | 'add',
-  updateToValue: 'new-value',
-  replaceValue: 'old-value'
+  field: '<column-name>',
+  transformType: TransformType,
+  updateToValue: '<new-value>',
+  replaceValue: '<old-value>'
 }
 
-export async function up(ddb?: unknown, dryRun: boolean) {
+export async function up(ddb: unknown, dryRun: boolean) {
   await transformDynamoData(event, dryRun)
-}
-
-export async down(ddb?: unknown) {
-  await restoreFromBackup(event)
 }
