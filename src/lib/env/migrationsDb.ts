@@ -23,9 +23,7 @@ export type AWSConfig = {
     sessionToken: string;
 };
 
-export async function configureMigrationsLogDbSchema(ddb: AWS.DynamoDB, stack: string, maxWaitTimeForTableCreation = 120) {
-    const migrationsTableName = `${stack}-migrations`
-
+export async function configureMigrationsLogDbSchema(ddb: AWS.DynamoDB, migrationsTableName: string, maxWaitTimeForTableCreation = 120) {
     const params: CreateTableCommandInput = {
         AttributeDefinitions: [
             {

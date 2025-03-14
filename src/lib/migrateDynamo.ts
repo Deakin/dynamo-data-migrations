@@ -12,12 +12,12 @@ export const createAction = async (description: string) => {
     return create(description);
 };
 
-export const upAction = async (profile: string, event?: any) => {
-    return up(profile, event);
+export const upAction = async (profile: string, migrationsTable: string, dryRun: boolean) => {
+    return up(profile, migrationsTable, dryRun);
 };
 
-export const downAction = async (profile: string, downShift: number, event?: any) => {
-    return down(profile, downShift, event);
+export const downAction = async (profile: string, downShift: number, migrationsTable: string, dryRun: boolean) => {
+    return down(profile, downShift, migrationsTable, dryRun);
 };
 
 export const statusAction = async (profile: string, event?: any) => {
