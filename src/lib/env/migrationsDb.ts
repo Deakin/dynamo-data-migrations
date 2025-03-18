@@ -155,32 +155,42 @@ async function loadAwsConfig(inputProfile: string): Promise<AWSConfig> {
         region: '',
     };
 
-    const configFromFile = await config.loadAWSConfig();
+    // Since we assume the role in the pipeline, let's check for environment variables directly first
+    if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY && process.env.AWS_SESSION_TOKEN) {
+        resultConfig.accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+        resultConfig.secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+        resultConfig.sessionToken = process.env.AWS_SESSION_TOKEN;
+        resultConfig.region = process.env.AWS_REGION || 'ap-southeast-2';
 
-    // Check for data for input profile
-    const profileConfig = configFromFile.find(
-        (obj: { profile: string; region: string; accessKeyId: string; secretAccessKey: string; sessionToken: string; }) => {
-            return obj.profile === inputProfile || (!obj.profile && inputProfile === 'default');
-        },
-    );
-
-    // Populate  region
-    if (profileConfig && profileConfig.region) {
-        resultConfig.region = profileConfig.region;
+        return resultConfig;
     } else {
-        throw new Error(`Please provide region for profile:${inputProfile}`);
-    }
+        const configFromFile = await config.loadAWSConfig();
 
-    if (profileConfig && profileConfig.accessKeyId && profileConfig.secretAccessKey && profileConfig.sessionToken) {
-        resultConfig.accessKeyId = profileConfig.accessKeyId;
-        resultConfig.secretAccessKey = profileConfig.secretAccessKey;
-        resultConfig.sessionToken = profileConfig.sessionToken;
-    } else {
-        // Load config from shared credentials ini file if present
-        const credentials = await fromIni({ profile: inputProfile })();
-        resultConfig.accessKeyId = credentials.accessKeyId;
-        resultConfig.secretAccessKey = credentials.secretAccessKey;
-        resultConfig.sessionToken = credentials.sessionToken as string;
+        // Check for data for input profile
+        const profileConfig = configFromFile.find(
+            (obj: { profile: string; region: string; accessKeyId: string; secretAccessKey: string; sessionToken: string; }) => {
+                return obj.profile === inputProfile || (!obj.profile && inputProfile === 'default');
+            },
+        );
+
+        // Populate  region
+        if (profileConfig && profileConfig.region) {
+            resultConfig.region = profileConfig.region;
+        } else {
+            throw new Error(`Please provide region for profile:${inputProfile}`);
+        }
+
+        if (profileConfig && profileConfig.accessKeyId && profileConfig.secretAccessKey && profileConfig.sessionToken) {
+            resultConfig.accessKeyId = profileConfig.accessKeyId;
+            resultConfig.secretAccessKey = profileConfig.secretAccessKey;
+            resultConfig.sessionToken = profileConfig.sessionToken;
+        } else {
+            // Load config from shared credentials ini file if present
+            const credentials = await fromIni({ profile: inputProfile })();
+            resultConfig.accessKeyId = credentials.accessKeyId;
+            resultConfig.secretAccessKey = credentials.secretAccessKey;
+            resultConfig.sessionToken = credentials.sessionToken as string;
+        }
+        return resultConfig;
     }
-    return resultConfig;
 }
