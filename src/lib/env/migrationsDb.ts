@@ -156,6 +156,11 @@ async function loadAwsConfig(inputProfile: string): Promise<AWSConfig> {
     };
 
     // Since we assume the role in the pipeline, let's check for environment variables directly first
+    console.log('AWS Access Key:', process.env.AWS_ACCESS_KEY_ID)
+    console.log('AWS Secret Access Key:', process.env.AWS_SECRET_ACCESS_KEY)
+    console.log('AWS Session Token:', process.env.AWS_SESSION_TOKEN)
+    console.log('AWS Region:', process.env.AWS_REGION)
+
     if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY && process.env.AWS_SESSION_TOKEN) {
         resultConfig.accessKeyId = process.env.AWS_ACCESS_KEY_ID;
         resultConfig.secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
